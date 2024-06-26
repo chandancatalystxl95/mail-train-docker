@@ -1,38 +1,50 @@
-version: '3'
-
+version: "3.8"
 services:
-  mysql:
-    image: mariadb:10.4
+  mailtrain:
+    image: mailtrain/mailtrain:v2.20210609.0
+    ports:
+    - 3000:3000
+    - 3003:3003
+    - 3004:3004
+    restart: unless-stopped
+    container_name: mailtrain
+    volumes:
+    - type: volume
+      target: /app/server/files
+      source: mailtrain-files
     environment:
-    - MYSQL_ROOT_PASSWORD=mailtrain
+    - ADMIN_PASSWORD=setAstrongAlphanumericPa55wordH3re
+    - PORT_TRUSTED=3000
+    - PORT_SANDBOX=3003
+    - PORT_PUBLIC=3004
+    - URL_BASE_TRUSTED=http://trusted.mailtrain.mydomain.com
+    - URL_BASE_SANDBOX=http://sandbox.mailtrain.mydomain.com
+    - URL_BASE_PUBLIC=http://public.mailtrain.mydomain.com
+    - WWW_PROXY=1
+    - WITH_REDIS=0
+    - WWW_SECRET=xxxxxxChangeThisxxxxxxxx
+    - WITH_ZONE_MTA=0
+    - MYSQL_HOST=db
     - MYSQL_DATABASE=mailtrain
     - MYSQL_USER=mailtrain
-    - MYSQL_PASSWORD=mailtrain
+    - MYSQL_PASSWORD=MysqlPasswordGoesHere
+    depends_on:
+    - db
+  db:
+    image: mariadb:10.6
+    restart: unless-stopped
+    container_name: db
     volumes:
-    - mysql-data:/var/lib/mysql
-
-  redis:
-    image: redis:5
-    volumes:
-    - redis-data:/data
-
-  mongo:
-    image: mongo:4-xenial
-    volumes:
-    - mongo-data:/data/db
-
-  mailtrain:
-    image: mailtrain/mailtrain:latest
-    ports:
-    - "3000:3000"
-    - "3003:3003"
-    - "3004:3004"
-    volumes:
-    - mailtrain-files:/app/server/files
-
+    - type: volume
+      target: /var/lib/mysql
+      source: db-data
+    environment:
+    - MARIADB_RANDOM_ROOT_PASSWORD=1
+    - MARIADB_DATABASE=mailtrain
+    - MARIADB_USER=mailtrain
+    - MARIADB_PASSWORD=MysqlPasswordGoesHere
 volumes:
-  mysql-data:
-  redis-data:
-  mongo-data:
   mailtrain-files:
-
+    driver: local
+  db-data:
+    driver: local
